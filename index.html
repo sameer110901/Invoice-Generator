@@ -1,0 +1,101 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Workshop Billing</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#f4f5f8;--c:#fff;--t:#1f2430;--m:#6c7385;--a:#2f6fed;--b:#e3e6ee;--r:#d9534f;--g:#1f9d55}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 system-ui,"Segoe UI",sans-serif;background:var(--bg);color:var(--t)}
+aside{position:fixed;left:0;top:0;bottom:0;width:210px;background:#262b3a;padding:12px 0;display:flex;flex-direction:column;z-index:3}
+.lg{color:#fff;font-weight:700;font-size:16px;padding:10px 18px 18px}
+aside button{background:none;border:0;border-radius:0;color:#b8bed0;text-align:left;padding:11px 18px;font-weight:500;min-height:44px}
+aside button.on{background:#323a4f;color:#fff;box-shadow:inset 3px 0 var(--a)}
+main{max-width:1100px;margin:0 auto;padding:20px}aside+main{margin-left:210px}
+.ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.ph h2{margin:0;font-size:22px}h3{margin:22px 0 10px}h1{margin:2px 0;font-size:28px}
+button,input,select{font:inherit;color:inherit;border:1px solid #cfd4e0;border-radius:6px;padding:8px 11px;background:var(--c);min-height:38px}
+button{cursor:pointer;font-weight:600}button.p{background:var(--a);color:#fff;border-color:var(--a)}
+:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.card{background:var(--c);border:1px solid var(--b);padding:14px 18px;border-radius:6px}.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.tw{overflow-x:auto;background:var(--c);border:1px solid var(--b);border-radius:6px}.tb{width:100%;border-collapse:collapse;white-space:nowrap}
+.tb th{text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--m);background:#fafbfc;padding:10px 14px;border-bottom:1px solid var(--b)}
+.tb td{padding:12px 14px;border-bottom:1px solid var(--b)}.tb tr[onclick]{cursor:pointer}.tb tr[onclick]:hover td{background:#f5f8ff}
+.bd{font-size:11px;font-weight:700;text-transform:uppercase;padding:3px 9px;border-radius:10px}.bd.Paid{color:var(--g);background:#e6f6ec}.bd.Partial{color:#2f6fed;background:#e8f0ff}.bd.Pending{color:#c77700;background:#fff3de}
+.Paid{color:var(--g)}.Partial{color:var(--a)}.Pending{color:#c77700}em{font-style:normal;font-size:12px;font-weight:700}
+.li{display:flex;justify-content:space-between;gap:10px;padding:10px 2px;border-bottom:1px solid var(--b)}small,.m{color:var(--m)}small{display:block}
+#m{display:none;position:fixed;inset:0;background:#0007;overflow:auto;z-index:5}#m.on{display:block}.box{background:var(--c);max-width:560px;margin:24px auto;padding:18px;border-radius:8px;width:calc(100% - 24px)}
+label{display:block;margin:8px 0;color:var(--m)}label input,label select{width:100%;margin-top:3px;color:var(--t)}label input[type=checkbox]{width:auto}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.row>input,.row>select{flex:1;min-width:120px}
+.ln{display:grid;grid-template-columns:1fr 64px 84px 40px;gap:6px;margin:6px 0}.ln input,.ln button{padding:6px}
+.stats{display:flex;gap:8px}.stats span{flex:1;background:var(--bg);padding:8px;border-radius:6px}.stats b{display:block}
+.auth{display:grid;gap:10px;max-width:380px;margin-top:10vh;background:var(--c);padding:26px;border:1px solid var(--b);border-radius:8px}.auth h2{margin:0 0 6px}.sp{display:flex;gap:6px;align-items:center;margin:0}
+.inv{background:var(--c);margin-top:20px}.inv table{width:100%;border-collapse:collapse}.inv td,.inv th{padding:6px 4px;border-bottom:1px solid var(--b);text-align:right}.inv td:first-child,.inv th:first-child{text-align:left}
+@media(max-width:800px){aside{top:auto;width:auto;right:0;flex-direction:row;overflow-x:auto;padding:0}.lg{display:none}aside button{white-space:nowrap;flex:1;text-align:center;padding:10px}aside button.on{box-shadow:inset 0 3px var(--a)}aside+main{margin:0}main{padding:14px 12px 76px}}
+#ld{display:none;position:fixed;top:0;left:0;right:0;height:3px;background:var(--a);z-index:9;animation:ldp .7s infinite alternate}@keyframes ldp{from{opacity:.2}to{opacity:1}}
+@media print{.np,aside{display:none}body{background:#fff}}
+</style></head><body><div id="app"></div><div id="ld"></div><div id="m"></div>
+<script>
+const SUPABASE_URL='https://pbaqrmiuckcvqpzhpopp.supabase.co',SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiYXFybWl1Y2tjdnFwemhwb3BwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzY2MzUsImV4cCI6MjEwODYxMjYzNX0.oTcM7Y0MQbDR2lTiJdGjCgqePNFG4NFNhxVNoB1gflo';
+const CFG=SUPABASE_URL.startsWith('https://')&&typeof supabase!='undefined';
+const sb=CFG?supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
+const $=s=>document.querySelector(s),app=$('#app');
+const e=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const n=v=>Number(v)||0,f=v=>'₹'+n(v).toLocaleString('en-IN',{maximumFractionDigits:2});
+const st=i=>n(i.total)-n(i.paid)<=0?'Paid':n(i.paid)>0?'Partial':'Pending';
+const age=i=>Math.floor((Date.now()-new Date(i.date))/864e5),lk=i=>location.href.split('#')[0]+'#i/'+i.token;
+let S={tab:'dash'},IL=[];
+function modal(h){const m=$('#m');m.innerHTML='<div class=box>'+h+'</div>';m.className='on';m.onmousedown=x=>{if(x.target==m)close()}}
+function close(){$('#m').className=''}
+function form(title,fields,save){
+ modal(`<h3>${title}</h3><form id=ff>${fields.map(([k,l,t,v,o])=>`<label>${l}${t=='select'?`<select name=${k}>${o.map(x=>`<option value="${x}" ${x==v?'selected':''}>${x}</option>`).join('')}</select>`:t=='check'?`<input type=checkbox name=${k} ${v?'checked':''}>`:`<input name=${k} type=${t||'text'} step=any value="${e(v)}">`}</label>`).join('')}<div class=row><button class=p>Save</button><button type=button onclick=close()>Cancel</button></div></form>`);
+ $('#ff').onsubmit=async x=>{x.preventDefault();const d={};fields.forEach(([k,,t])=>{const el=x.target[k];d[k]=t=='check'?el.checked:t=='number'?n(el.value):el.value||null});await save(d)}}
+async function load(){$('#ld').style.display='block';const w=S.ws.id,r=await Promise.all([sb.from('customers').select('*').eq('workshop_id',w).order('name'),sb.from('items').select('*').eq('workshop_id',w).order('name'),sb.from('invoice_summary').select('*').eq('workshop_id',w).order('created_at',{ascending:false})]);[S.cu,S.it,S.inv]=r.map(x=>x.data||[]);$('#ld').style.display='none'}
+window.onerror=m=>alert('App error: '+m);addEventListener('unhandledrejection',x=>alert('App error: '+(x.reason?.message||x.reason)));
+const badge=i=>`<span class="bd ${st(i)}">${st(i)}</span>`;
+const row=i=>`<tr onclick="showInv('${i.id}')"><td>${i.date}<td>${e(i.number)}<td>${e(i.customer_name||'Walk-in')}<td>${badge(i)}<td>${f(i.total)}<td>${f(n(i.total)-n(i.paid))}</tr>`;
+const tbl=(h,b)=>`<div class=tw><table class=tb><tr>${h.map(x=>`<th>${x}`).join('')}</tr>${b||'<tr><td colspan=9 class=m>Nothing here yet.'}</table></div>`;
+const IH=['Date','Invoice#','Customer','Status','Amount','Balance due'],NEW='<button class=p onclick=newInv()>+ New invoice</button>';
+const head=(t,b='')=>`<div class=ph><h2>${t}</h2>${b}</div>`;
+const rc=c=>S.inv.filter(i=>i.customer_id==c.id).reduce((s,i)=>s+n(i.total)-n(i.paid),0);
+const V={
+dash(){const p=S.inv.filter(i=>st(i)!='Paid').sort((a,b)=>a.date<b.date?-1:1),t=p.reduce((s,i)=>s+n(i.total)-n(i.paid),0),lo=S.it.filter(i=>i.kind=='material'&&n(i.stock)<=n(i.low_stock));
+ return head('Dashboard',NEW)+`<div class=kp><div class=card><small>Total receivables</small><h1>${f(t)}</h1></div><div class=card><small>Unpaid invoices</small><h1>${p.length}</h1></div><div class=card><small>Customers</small><h1>${S.cu.length}</h1></div></div><h3>Unpaid invoices (oldest first)</h3>`+tbl(IH,p.map(row).join(''))+'<h3>Low stock</h3>'+tbl(['Item','Stock'],lo.map(i=>`<tr><td>${e(i.name)}<td>${n(i.stock)} ${e(i.unit)}</tr>`).join(''))},
+inv(){return head('All Invoices',NEW)+tbl(IH,S.inv.map(row).join(''))},
+cu(){return head('Customers','<button class=p onclick=cuForm()>+ New customer</button>')+tbl(['Name','Phone','Tractor','Receivables'],S.cu.map(c=>`<tr onclick="custHist('${c.id}')"><td>${e(c.name)}<td>${e(c.phone||'')}<td>${e(c.tractor||'')}<td>${f(rc(c))}</tr>`).join(''))},
+it(){return head('Materials and Services','<button class=p onclick=itForm()>+ New item</button>')+tbl(['Name','Type','Rate','Stock',''],S.it.map(i=>`<tr onclick="itForm('${i.id}')"><td>${e(i.name)}<td>${i.kind}<td>${f(i.price)} / ${e(i.unit)}<td class=${i.kind=='material'&&n(i.stock)<=n(i.low_stock)?'Pending':''}>${i.kind=='material'?n(i.stock):'-'}<td>${i.kind=='material'?`<button onclick="event.stopPropagation();addStock('${i.id}')">Add stock</button>`:''}</tr>`).join(''))},
+set(){return head('Workshop profile','<button class=p onclick=wsForm()>Edit</button>')+`<div class=card><b>${e(S.ws.name)}</b><br>${e(S.ws.address||'')}<br>${e(S.ws.phone||'')}<br>UPI: ${e(S.ws.upi||'-')}<br>${S.ws.gst_enabled?'GST registered: '+e(S.ws.gstin||''):'Not GST registered (plain bill)'}</div>`}};
+async function render(r=true){if(r)await load();const T=[['dash','Dashboard'],['inv','Invoices'],['cu','Customers'],['it','Materials'],['set','Profile']];
+ app.innerHTML=`<aside><div class=lg>${e(S.ws.name)}</div>${T.map(([k,l])=>`<button class="${S.tab==k?'on':''}" onclick="S.tab='${k}';render(false)">${l}</button>`).join('')}<button onclick="sb.auth.signOut().then(boot)">Log out</button></aside><main>${V[S.tab]()}</main>`}
+const ok=r=>r.error?(alert(r.error.message),0):1;
+function cuForm(id){const c=S.cu.find(x=>x.id==id)||{};form(id?'Edit customer':'New customer',[['name','Name','text',c.name],['phone','Phone','text',c.phone],['address','Address','text',c.address],['gstin','GSTIN (optional)','text',c.gstin],['tractor','Tractor (model / reg. no.)','text',c.tractor]],async d=>{const r=id?await sb.from('customers').update(d).eq('id',id):await sb.from('customers').insert({...d,workshop_id:S.ws.id});if(ok(r)){close();render()}})}
+function itForm(id){const i=S.it.find(x=>x.id==id)||{kind:'material',unit:'pcs'};form(id?'Edit item':'New item',[['name','Name','text',i.name],['kind','Type','select',i.kind,['material','service']],['unit','Unit','text',i.unit],['price','Selling price','number',i.price],['stock','Stock in hand','number',i.stock],['low_stock','Low-stock alert at','number',i.low_stock],['gst_rate','GST %','number',i.gst_rate]],async d=>{const r=id?await sb.from('items').update(d).eq('id',id):await sb.from('items').insert({...d,workshop_id:S.ws.id});if(ok(r)){close();render()}})}
+async function addStock(id){const q=n(prompt('Quantity purchased'));if(!q)return;const i=S.it.find(x=>x.id==id);if(ok(await sb.from('items').update({stock:n(i.stock)+q}).eq('id',id)))render()}
+function custHist(id){const c=S.cu.find(x=>x.id==id),L=S.inv.filter(i=>i.customer_id==id),b=L.reduce((s,i)=>s+n(i.total),0),p=L.reduce((s,i)=>s+n(i.paid),0);
+ modal(`<h3>${e(c.name)}</h3><p class=m>${e(c.phone||'')} ${e(c.tractor||'')}</p><div class=stats><span>Billed<b>${f(b)}</b></span><span>Paid<b>${f(p)}</b></span><span>Pending<b>${f(b-p)}</b></span></div><h3>History</h3>${tbl(IH,L.map(row).join(''))}<div class=row><button onclick="cuForm('${id}')">Edit</button><button onclick=close()>Close</button></div>`)}
+const tots=()=>{let s=0,g=0;IL.forEach(l=>{const a=n(l.qty)*n(l.rate);s+=a;if(S.ws.gst_enabled)g+=a*n(l.gst_rate)/100});return{s,g,t:s+g}};
+const tt=()=>{const t=tots();$('#tt').innerHTML=`<p>Subtotal ${f(t.s)}${S.ws.gst_enabled?` · GST ${f(t.g)}`:''} · <b>Total ${f(t.t)}</b></p>`};
+function rl(){$('#ls').innerHTML=IL.length?`<div class=ln><small>Item</small><small>Qty</small><small>Rate</small><span></span></div>`+IL.map((l,k)=>`<div class=ln><input value="${e(l.description)}" placeholder="Description" oninput="IL[${k}].description=this.value"><input type=number step=any value=${l.qty} aria-label=Quantity oninput="IL[${k}].qty=this.value;tt()"><input type=number step=any value=${l.rate} aria-label=Rate oninput="IL[${k}].rate=this.value;tt()"><button onclick="IL.splice(${k},1);rl()" aria-label=Remove>✕</button></div>`).join(''):'<p class=m>No items yet. Tap an item below to add it to the bill.</p>';tt()}
+function pk(){const q=($('#sq').value||'').toLowerCase();$('#pk').innerHTML=S.it.filter(i=>i.name.toLowerCase().includes(q)).map(i=>`<div class=li style="cursor:pointer" onclick="addI('${i.id}')"><span>${e(i.name)}<small>${i.kind=='material'?'Stock '+n(i.stock)+' '+e(i.unit):'Service'}</small></span><span><b>${f(i.price)}</b> <button type=button class=p>Add</button></span></div>`).join('')||'<p class=m>No match. Add it under Materials, or use a custom line.</p>'}
+function addI(id){const i=S.it.find(x=>x.id==id),l=IL.find(x=>x.item_id==id);if(l)l.qty=n(l.qty)+1;else IL.push({item_id:id,description:i.name,qty:1,rate:n(i.price),gst_rate:n(i.gst_rate)});rl()}
+function addC(){IL.push({description:'',qty:1,rate:0,gst_rate:0});rl()}
+function newInv(){IL=[];modal(`<h3>New invoice</h3><label>Customer<select id=ic><option value="">Walk-in or new customer</option>${S.cu.map(c=>`<option value=${c.id}>${e(c.name)}</option>`).join('')}</select></label><div class=row><input id=nn placeholder="New customer name"><input id=np placeholder=Phone></div><h3>Bill items</h3><div id=ls></div><div id=tt></div><h3>Add materials or services</h3><input id=sq placeholder="Search materials or services" oninput=pk() style="width:100%"><div id=pk style="max-height:210px;overflow:auto"></div><div class=row><button onclick=addC()>+ Custom line</button></div><label>Amount received now<input id=rc type=number step=any value=0></label><label>Notes<input id=nt></label><div class=row><button id=sv class=p onclick=saveInv()>Save invoice</button><button onclick=close()>Cancel</button></div>`);rl();pk()}
+async function saveInv(){const b=$('#sv');if(b.disabled)return;b.disabled=true;b.textContent='Saving…';await _saveInv();b.disabled=false;b.textContent='Save invoice'}
+async function _saveInv(){if(!IL.length)return alert('Add at least one line.');let cid=$('#ic').value||null;
+ if(!cid&&$('#nn').value){const r=await sb.from('customers').insert({workshop_id:S.ws.id,name:$('#nn').value,phone:$('#np').value||null}).select().single();if(!ok(r))return;cid=r.data.id}
+ const t=tots(),r=await sb.from('invoices').insert({workshop_id:S.ws.id,customer_id:cid,subtotal:t.s,gst:t.g,total:t.t,notes:$('#nt').value||null}).select().single();if(!ok(r))return;
+ const x=await sb.from('invoice_lines').insert(IL.map(l=>({item_id:l.item_id||null,description:l.description,gst_rate:n(l.gst_rate),invoice_id:r.data.id,workshop_id:S.ws.id,qty:n(l.qty),rate:n(l.rate)})));if(!ok(x))return;
+ if(n($('#rc').value)>0)await sb.from('payments').insert({invoice_id:r.data.id,workshop_id:S.ws.id,amount:n($('#rc').value)});close();render()}
+async function showInv(id){const i=S.inv.find(x=>x.id==id),[l,p]=await Promise.all([sb.from('invoice_lines').select('*').eq('invoice_id',id),sb.from('payments').select('*').eq('invoice_id',id).order('paid_on')]),bal=n(i.total)-n(i.paid);
+ modal(`<h3>${e(i.number)} <em class=${st(i)}>${st(i)}</em></h3><p class=m>${e(i.customer_name||'Walk-in')} · ${i.date}</p>${(l.data||[]).map(x=>`<div class=li><span>${e(x.description)}<small>${x.qty} × ${f(x.rate)}</small></span><b>${f(x.qty*x.rate)}</b></div>`).join('')}<p>Total <b>${f(i.total)}</b> · Received <b>${f(i.paid)}</b> · Balance <b>${f(bal)}</b></p>${(p.data||[]).map(x=>`<small>${x.paid_on}: ${f(x.amount)} (${x.mode})</small>`).join('')}<div class=row>${bal>0?`<button class=p onclick="pay('${id}',${bal})">Add payment</button>`:''}<button onclick="wa('${id}')">WhatsApp</button><button onclick="navigator.clipboard.writeText(lk(S.inv.find(x=>x.id=='${id}')));this.textContent='Link copied'">Copy link</button><button onclick="open(lk(S.inv.find(x=>x.id=='${id}')))">Open / print</button><button onclick="del('${id}')">Delete</button></div>`)}
+function pay(id,bal){form('Add payment',[['amount','Amount','number',bal],['mode','Mode','select','upi',['cash','upi','cheque','bank']]],async d=>{if(ok(await sb.from('payments').insert({...d,invoice_id:id,workshop_id:S.ws.id}))){close();render()}})}
+async function del(id){if(confirm('Delete this invoice? Stock will be restored.')&&ok(await sb.from('invoices').delete().eq('id',id))){close();render()}}
+function wa(id){const i=S.inv.find(x=>x.id==id),c=S.cu.find(x=>x.id==i.customer_id);let ph=(c?.phone||'').replace(/\D/g,'');if(ph.length==10)ph='91'+ph;
+ open(`https://wa.me/${ph}?text=${encodeURIComponent(`Hello${c?' '+c.name:''}, invoice ${i.number} from ${S.ws.name}: total ${f(i.total)}, balance ${f(n(i.total)-n(i.paid))}. View: ${lk(i)}`)}`)}
+function wsForm(first){const w=first?{}:S.ws;form(first?'Set up your workshop':'Workshop profile',[['name','Workshop name','text',w.name],['address','Address','text',w.address],['phone','Phone','text',w.phone],['upi','UPI ID','text',w.upi],['prefix','Invoice prefix','text',w.prefix||'INV'],['gst_enabled','GST registered (issue tax invoices)','check',w.gst_enabled],['gstin','GSTIN (only if registered)','text',w.gstin]],async d=>{const r=first?await sb.from('workshops').insert(d).select().single():await sb.from('workshops').update(d).eq('id',S.ws.id).select().single();if(ok(r)){S.ws=r.data;close();render()}})}
+function authView(){app.innerHTML=`<main class=auth><h2>Workshop Billing</h2><input id=em type=email placeholder=Email autocomplete=email><input id=pw type=password placeholder=Password autocomplete=current-password onkeydown="event.key=='Enter'&&au('in')"><label class=sp><input type=checkbox onchange="$('#pw').type=this.checked?'text':'password'"> Show password</label><button class=p onclick="au('in')">Sign in</button><button onclick="au('up')">Create account</button></main>`}
+async function au(k){const c={email:$('#em').value,password:$('#pw').value},r=k=='in'?await sb.auth.signInWithPassword(c):await sb.auth.signUp(c);if(r.error)return alert(r.error.message);if(!r.data.session)return alert('Confirm your email, then sign in.');boot()}
+async function pub(t){const{data:d}=await sb.rpc('public_invoice',{t});if(!d)return app.innerHTML='<main><p>Invoice not found.</p></main>';
+ const i=d.invoice,w=d.workshop,bal=n(i.total)-n(d.paid);
+ app.innerHTML=`<main class=inv><h2>${e(w.name)}</h2><p class=m>${e(w.address||'')} ${e(w.phone||'')}${w.gst&&w.gstin?'<br>GSTIN: '+e(w.gstin):''}</p><h3>${w.gst?'Tax invoice':'Bill'} ${e(i.number)}</h3><p>${i.date}<br>Customer: ${e(d.customer?.name||'')}</p><table><tr><th>Item<th>Qty<th>Rate<th>Amount</tr>${d.lines.map(l=>`<tr><td>${e(l.description)}<td>${l.qty}<td>${f(l.rate)}<td>${f(l.qty*l.rate)}</tr>`).join('')}</table><p>Subtotal ${f(i.subtotal)}<br>${w.gst?`CGST ${f(i.gst/2)} · SGST ${f(i.gst/2)}<br>`:''}<b>Total ${f(i.total)}</b><br>Received ${f(d.paid)}<br><b>Balance due ${f(bal)}</b></p>${bal>0&&w.upi?`<p>Pay by UPI: <b>${e(w.upi)}</b></p>`:''}<button class="np p" onclick=print()>Print / save PDF</button></main>`}
+async function boot(){if(!CFG)return app.innerHTML='<main><h2>Setup needed</h2><p>Open index.html in a text editor and replace YOUR_SUPABASE_URL and YOUR_SUPABASE_ANON_KEY near the top of the script with your project values. If you already did, check your internet connection (the Supabase script did not load).</p></main>';
+ if(location.hash.startsWith('#i/'))return pub(location.hash.slice(3));
+ const{data:{session}}=await sb.auth.getSession();if(!session)return authView();
+ const r=await sb.from('workshops').select('*').limit(1);if(!ok(r))return;if(!r.data.length)return wsForm(true);S.ws=r.data[0];render()}
+boot();
+</script></body></html>
